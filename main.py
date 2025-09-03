@@ -11,18 +11,18 @@ import PyPDF2
 import docx
 from typing import Dict, List, Optional
 
-from recruitment_orchestrator import RecruitmentOrchestrator
+from recruitment_orchestrator_langgraph import LangGraphRecruitmentOrchestrator
 from config import APP_NAME, APP_VERSION
 
 # Initialize FastAPI app
 app = FastAPI(
     title=APP_NAME,
     version=APP_VERSION,
-    description="AI-Powered Recruitment System with Multi-Agent Coordination"
+    description="AI-Powered Recruitment System with Multi-Agent Coordination using LangGraph"
 )
 
-# Initialize recruitment orchestrator
-orchestrator = RecruitmentOrchestrator()
+# Initialize recruitment orchestrator with LangGraph
+orchestrator = LangGraphRecruitmentOrchestrator()
 
 # Mount static files and templates
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -52,7 +52,7 @@ async def get_job_openings():
     try:
         return JSONResponse(content={
             "status": "success",
-            "job_openings": orchestrator.job_openings
+            "job_openings": orchestrator.state.get("job_openings", [])
         })
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -75,7 +75,7 @@ async def apply_for_job(
             raise HTTPException(status_code=422, detail="Experience years must be a valid number")
         
         candidate_data = {
-            "candidate_id": f"candidate_{len(orchestrator.candidates) + 1}",
+            "candidate_id": f"candidate_{len(orchestrator.state.get('candidates', [])) + 1}",
             "candidate_name": candidate_name,
             "email": email,
             "phone": phone,
@@ -98,7 +98,7 @@ async def get_candidates():
     try:
         return JSONResponse(content={
             "status": "success",
-            "candidates": orchestrator.candidates
+            "candidates": orchestrator.state.get("candidates", [])
         })
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -146,10 +146,10 @@ async def get_system_status():
             "status": "healthy",
             "app_name": APP_NAME,
             "version": APP_VERSION,
-            "job_openings_count": len(orchestrator.job_openings),
-            "candidates_count": len(orchestrator.candidates),
-            "interviews_count": len([c for c in orchestrator.candidates if c.get("status") == "interview_scheduled"]),
-            "hired_count": len([c for c in orchestrator.candidates if c.get("status") == "hired"])
+            "job_openings_count": len(orchestrator.state.get("job_openings", [])),
+            "candidates_count": len(orchestrator.state.get("candidates", [])),
+            "interviews_count": len([c for c in orchestrator.state.get("candidates", []) if c.get("status") == "interview_scheduled"]),
+            "hired_count": len([c for c in orchestrator.state.get("candidates", []) if c.get("status") == "hired"])
         })
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
