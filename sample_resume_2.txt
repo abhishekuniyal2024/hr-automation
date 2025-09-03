@@ -1,0 +1,45 @@
+SARAH JOHNSON
+Software Engineer
+sarah.johnson@email.com | (555) 987-6543 | linkedin.com/in/sarahjohnson
+
+PROFESSIONAL SUMMARY
+Passionate Software Engineer with 3 years of experience in web development and data analysis. Strong foundation in Python and JavaScript with a focus on creating user-friendly applications and data-driven solutions.
+
+TECHNICAL SKILLS
+• Programming Languages: Python, JavaScript, HTML, CSS, SQL
+• Frameworks & Libraries: React, Flask, Bootstrap, jQuery
+• Tools & Platforms: Git, VS Code, Jupyter Notebook, Tableau
+• Databases: SQLite, MySQL, MongoDB
+• Other: REST APIs, JSON, XML, Agile methodologies
+
+PROFESSIONAL EXPERIENCE
+
+Software Engineer | DataTech Solutions | 2022 - Present
+• Developed web applications using Python Flask and React
+• Created data visualization dashboards using Tableau
+• Collaborated with data science team on analytics projects
+• Participated in code reviews and team meetings
+• Technologies: Python, React, SQL, Tableau
+
+Junior Developer | WebStart Inc | 2021 - 2022
+• Built responsive websites using HTML, CSS, and JavaScript
+• Assisted in database design and maintenance
+• Fixed bugs and implemented new features
+• Worked with senior developers on larger projects
+• Technologies: HTML, CSS, JavaScript, MySQL
+
+EDUCATION
+Bachelor of Science in Information Technology
+State University | 2021
+
+CERTIFICATIONS
+• Python Programming Certification
+• Web Development Bootcamp Certificate
+
+PROJECTS
+• Personal Blog: Built responsive blog using React and Node.js
+• Weather App: Created weather application using Python and APIs
+• Portfolio Website: Designed personal portfolio with HTML/CSS
+
+LANGUAGES
+English (Native)

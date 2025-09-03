@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Recruitment System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-green-600 text-white p-6 rounded-lg mb-6">
+            <h1 class="text-3xl font-bold">AI Recruitment System</h1>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-4 mb-6">
+            <button id="startBtn" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded">Start Recruitment</button>
+            <button id="refreshBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded">Refresh</button>
+        </div>
+
+        <!-- Dashboard -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white p-4 rounded shadow">
+                <h3 class="font-bold text-gray-700">Job Openings</h3>
+                <p id="jobCount" class="text-2xl font-bold text-blue-600">0</p>
+            </div>
+            <div class="bg-white p-4 rounded shadow">
+                <h3 class="font-bold text-gray-700">Candidates</h3>
+                <p id="candidateCount" class="text-2xl font-bold text-green-600">0</p>
+            </div>
+            <div class="bg-white p-4 rounded shadow">
+                <h3 class="font-bold text-gray-700">Interviews</h3>
+                <p id="interviewCount" class="text-2xl font-bold text-yellow-600">0</p>
+            </div>
+            <div class="bg-white p-4 rounded shadow">
+                <h3 class="font-bold text-gray-700">Hired</h3>
+                <p id="hiredCount" class="text-2xl font-bold text-purple-600">0</p>
+            </div>
+        </div>
+
+        <!-- Job Openings -->
+        <div class="bg-white rounded shadow p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">Job Openings</h2>
+            <div id="jobList"></div>
+        </div>
+        
+        <!-- Multi-Resume Upload Section -->
+        <div class="bg-white rounded shadow p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">📄 Upload Multiple Resumes</h2>
+            <p class="text-gray-600 mb-4">Upload multiple candidate resumes and let AI score and select the best candidate.</p>
+            
+            <form id="multiResumeForm" class="space-y-4">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <input type="file" id="resumeFiles" name="resumes" multiple accept=".pdf,.doc,.docx,.txt" class="hidden">
+                    <label for="resumeFiles" class="cursor-pointer">
+                        <div class="text-4xl mb-2">📁</div>
+                        <div class="text-lg font-medium text-gray-700">Click to upload resumes</div>
+                        <div class="text-sm text-gray-500">PDF, DOC, DOCX, or TXT files</div>
+                        <div class="text-xs text-gray-400 mt-2">You can select multiple files</div>
+                    </label>
+                </div>
+                
+                <div id="fileList" class="space-y-2"></div>
+                
+                <div class="flex gap-4">
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded">
+                        🚀 Analyze & Score Resumes
+                    </button>
+                    <button type="button" id="clearBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded">
+                        Clear All
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- AI Scoring Results -->
+        <div id="scoringResults" class="bg-white rounded shadow p-6 mb-6 hidden">
+            <h2 class="text-xl font-bold mb-4">🤖 AI Scoring Results</h2>
+            <div id="candidateScores" class="space-y-4"></div>
+            
+            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                <h3 class="font-bold text-blue-800 mb-2">🏆 Best Candidate Selected</h3>
+                <div id="bestCandidate" class="text-blue-700"></div>
+            </div>
+            
+            <div class="mt-4 flex gap-4">
+                <button id="hireBtn" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded">
+                    ✅ Hire Selected Candidate
+                </button>
+                <button id="resetBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded">
+                    🔄 Start Over
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('startBtn').addEventListener('click', startRecruitment);
+        document.getElementById('refreshBtn').addEventListener('click', refreshData);
+        document.getElementById('multiResumeForm').addEventListener('submit', handleMultiResumeUpload);
+        document.getElementById('clearBtn').addEventListener('click', clearFiles);
+        document.getElementById('hireBtn').addEventListener('click', hireSelectedCandidate);
+        document.getElementById('resetBtn').addEventListener('click', resetScoring);
+        
+        let selectedFiles = [];
+        let scoringResults = [];
+
+        async function startRecruitment() {
+            try {
+                console.log('Starting recruitment process...');
+                const response = await fetch('/api/start-recruitment', {method: 'POST'});
+                console.log('Response received:', response);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('Result:', result);
+                
+                if (result.status === 'success') {
+                    alert('Recruitment started successfully!');
+                    refreshData();
+                } else {
+                    alert('Error: ' + (result.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error starting recruitment:', error);
+                alert('Error starting recruitment: ' + error.message);
+            }
+        }
+        
+        async function refreshData() {
+            try {
+                console.log('Refreshing data...');
+                const [statusRes, jobsRes] = await Promise.all([
+                    fetch('/api/status'),
+                    fetch('/api/job-openings')
+                ]);
+                
+                if (!statusRes.ok || !jobsRes.ok) {
+                    throw new Error('Failed to fetch data');
+                }
+                
+                const status = await statusRes.json();
+                const jobs = await jobsRes.json();
+                
+                console.log('Status:', status);
+                console.log('Jobs:', jobs);
+                
+                document.getElementById('jobCount').textContent = status.job_openings_count || 0;
+                document.getElementById('candidateCount').textContent = status.candidates_count || 0;
+                document.getElementById('interviewCount').textContent = status.interviews_count || 0;
+                document.getElementById('hiredCount').textContent = status.hired_count || 0;
+                
+                displayJobs(jobs.job_openings || []);
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+                alert('Error refreshing data: ' + error.message);
+            }
+        }
+        
+        function displayJobs(jobs) {
+            const container = document.getElementById('jobList');
+            if (jobs.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">No job openings found.</p>';
+                return;
+            }
+            
+            container.innerHTML = jobs.map(job => `
+                <div class="border border-gray-200 p-6 rounded-lg mb-6 shadow-sm hover:shadow-md transition-shadow bg-white">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="font-bold text-xl text-gray-800 mb-2">${job.position}</h3>
+                            <p class="text-blue-600 font-medium">${job.department}</p>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-sm font-medium ${
+                            job.priority === 'High' ? 'bg-red-100 text-red-800' : 
+                            job.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 
+                            'bg-green-100 text-green-800'
+                        }">${job.priority} Priority</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="flex items-center">
+                            <span class="text-green-600 font-semibold mr-2">💰</span>
+                            <span class="text-gray-700">${job.salary_range}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="text-blue-600 font-semibold mr-2">⏰</span>
+                            <span class="text-gray-700">${job.experience_level} experience</span>
+                        </div>
+                    </div>
+                    
+                    ${job.job_description ? `
+                        <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+                            <h4 class="font-semibold text-gray-800 mb-2">📋 Job Description</h4>
+                            <div class="text-gray-700 text-sm leading-relaxed whitespace-pre-line">${job.job_description}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        // File handling
+        document.getElementById('resumeFiles').addEventListener('change', handleFileSelect);
+
+        function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            selectedFiles = files;
+            displayFileList();
+        }
+
+        function displayFileList() {
+            const fileList = document.getElementById('fileList');
+            if (selectedFiles.length === 0) {
+                fileList.innerHTML = '';
+                return;
+            }
+
+            fileList.innerHTML = selectedFiles.map((file, index) => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center">
+                        <span class="text-blue-500 mr-2">📄</span>
+                        <span class="font-medium">${file.name}</span>
+                        <span class="text-gray-500 text-sm ml-2">(${(file.size / 1024).toFixed(1)} KB)</span>
+                    </div>
+                    <button type="button" onclick="removeFile(${index})" class="text-red-500 hover:text-red-700">
+                        ❌
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            displayFileList();
+        }
+
+        function clearFiles() {
+            selectedFiles = [];
+            document.getElementById('resumeFiles').value = '';
+            displayFileList();
+        }
+
+        async function handleMultiResumeUpload(event) {
+            event.preventDefault();
+            
+            if (selectedFiles.length === 0) {
+                alert('Please select at least one resume file.');
+                return;
+            }
+
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('resumes', file);
+            });
+
+            try {
+                // Show loading state
+                const submitBtn = event.target.querySelector('button[type="submit"]');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = '🔄 Analyzing...';
+                submitBtn.disabled = true;
+
+                const response = await fetch('/api/upload-resumes', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('Scoring result:', result);
+
+                if (result.status === 'success') {
+                    scoringResults = result.candidates;
+                    displayScoringResults();
+                    document.getElementById('scoringResults').classList.remove('hidden');
+                } else {
+                    alert('Error: ' + (result.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error uploading resumes:', error);
+                alert('Error uploading resumes: ' + error.message);
+            } finally {
+                // Reset button state
+                const submitBtn = event.target.querySelector('button[type="submit"]');
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        function displayScoringResults() {
+            const container = document.getElementById('candidateScores');
+            const bestCandidate = document.getElementById('bestCandidate');
+
+            // Sort candidates by score (highest first)
+            const sortedCandidates = [...scoringResults].sort((a, b) => b.overall_score - a.overall_score);
+
+            container.innerHTML = sortedCandidates.map((candidate, index) => `
+                <div class="border border-gray-200 p-4 rounded-lg ${index === 0 ? 'bg-green-50 border-green-300' : 'bg-white'}">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h3 class="font-bold text-lg ${index === 0 ? 'text-green-800' : 'text-gray-800'}">
+                                ${index === 0 ? '🥇 ' : index === 1 ? '🥈 ' : index === 2 ? '🥉 ' : ''}${candidate.candidate_name}
+                            </h3>
+                            <p class="text-gray-600">${candidate.filename}</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold ${index === 0 ? 'text-green-600' : 'text-blue-600'}">
+                                ${candidate.overall_score.toFixed(1)}/100
+                            </div>
+                            <div class="text-sm text-gray-500">Overall Score</div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div>
+                            <span class="font-medium">Skills Match:</span>
+                            <div class="text-blue-600 font-bold">${candidate.skill_match_score.toFixed(1)}%</div>
+                        </div>
+                        <div>
+                            <span class="font-medium">Experience:</span>
+                            <div class="text-green-600 font-bold">${candidate.experience_match_score.toFixed(1)}%</div>
+                        </div>
+                        <div>
+                            <span class="font-medium">Cultural Fit:</span>
+                            <div class="text-purple-600 font-bold">${candidate.cultural_fit_score.toFixed(1)}%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3 p-3 bg-gray-50 rounded text-sm">
+                        <div class="font-medium mb-1">AI Feedback:</div>
+                        <div class="text-gray-700">${candidate.ai_feedback}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Display best candidate
+            const best = sortedCandidates[0];
+            bestCandidate.innerHTML = `
+                <div class="font-bold text-lg">${best.candidate_name}</div>
+                <div class="text-sm">Score: ${best.overall_score.toFixed(1)}/100</div>
+                <div class="text-sm">File: ${best.filename}</div>
+            `;
+        }
+
+        async function hireSelectedCandidate() {
+            if (scoringResults.length === 0) {
+                alert('No candidates to hire.');
+                return;
+            }
+
+            const bestCandidate = [...scoringResults].sort((a, b) => b.overall_score - a.overall_score)[0];
+
+            try {
+                const response = await fetch('/api/hire-candidate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        candidate_id: bestCandidate.candidate_id,
+                        decision: 'hired',
+                        notes: `Selected as best candidate with score ${bestCandidate.overall_score.toFixed(1)}/100`
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    alert(`✅ Successfully hired ${bestCandidate.candidate_name}!`);
+                    refreshData();
+                } else {
+                    alert('Error: ' + (result.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error hiring candidate:', error);
+                alert('Error hiring candidate: ' + error.message);
+            }
+        }
+
+        function resetScoring() {
+            scoringResults = [];
+            document.getElementById('scoringResults').classList.add('hidden');
+            clearFiles();
+        }
+        
+        // Load initial data
+        refreshData();
+    </script>
+</body>
+</html>

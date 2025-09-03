@@ -1,0 +1,38 @@
+{
+  "total_job_openings": 1,
+  "total_candidates": 3,
+  "candidates_by_status": {
+    "hired": 1,
+    "rejected": 2
+  },
+  "interview_completion_rate": 33.33,
+  "hiring_success_rate": 33.33,
+  "average_time_to_hire": "0.0 days",
+  "top_performing_candidates": [
+    {
+      "candidate_id": "candidate_3",
+      "candidate_name": "pankaj",
+      "position": "senior software engineer",
+      "score": 22.73,
+      "status": "rejected"
+    },
+    {
+      "candidate_id": "candidate_1",
+      "candidate_name": "abhishek uniyal",
+      "position": "senior software engineer",
+      "score": 10.73,
+      "status": "hired"
+    },
+    {
+      "candidate_id": "candidate_2",
+      "candidate_name": "abhishek uniyal",
+      "position": "senior software engineer",
+      "score": 10.73,
+      "status": "rejected"
+    }
+  ],
+  "recruitment_insights": [
+    "Most commonly missing skills: DevOps, Data Engineering, Git",
+    "Candidate experience distribution: {'Underqualified': 2, 'Well Qualified': 1}"
+  ]
+}
