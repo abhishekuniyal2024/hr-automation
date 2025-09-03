@@ -1,0 +1,13 @@
+# Ignore environment folders
+recruitment_ai_env/
+__pycache__/
+
+# Ignore system files
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore other unnecessary files
+.DS_Store
+*.log
+.env
